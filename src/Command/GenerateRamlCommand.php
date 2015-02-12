@@ -10,18 +10,18 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Console\Question\Question;
 
-class RamlGenerateCommand extends ContainerAwareCommand
+class GenerateRamlCommand extends ContainerAwareCommand
 {
     protected function configure()
     {
         $this
-            ->setName('api2symfony:generate:raml')
-            ->setDescription('Convert a RAML specification to mocked controllers')
+            ->setName('api2symfony:raml:generate')
+            ->setDescription('Generate Symfony controllers from RAML')
             ->addArgument('raml_file', InputArgument::REQUIRED, 'RAML specification file')
             ->addArgument('bundle_namespace', InputArgument::REQUIRED, 'Namespace of the bundle where controllers will be dumped')
             ->addOption('destination', 'd', InputOption::VALUE_OPTIONAL, 'Force another destination for dumped controllers')
             ->setHelp(<<<EOT
-The <info>%command.name%</info> command will convert a RAML specification to mocked controllers.
+The <info>%command.name%</info> command will convert a RAML specification to Symfony controllers.
 
   <info>php %command.full_name% path/to/file.raml Base/Namespace/Of/YourBundle [--destination=force/another/destination/path]</info>
 EOT
