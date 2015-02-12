@@ -16,8 +16,8 @@
         "psr-4": { "Creads\\Api2SymfonyBundle\\": "src" }
     },
     "require": {
+        "creads/api2symfony": "@dev",
         "symfony/http-kernel": "~2.3",
-        "creads/api2symfony": "~1.1@dev",
         "symfony/filesystem": "~2.3",
         "symfony/twig-bundle": "~2.3"
     },

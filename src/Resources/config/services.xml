@@ -4,13 +4,36 @@
     xmlns="http://symfony.com/schema/dic/services"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
+
     <parameters>
+        <!-- define supported formats and there priorities -->
+        <parameter key="api2symfony.formats" type="collection">
+            <parameter>json</parameter>
+            <parameter>xml</parameter>
+        </parameter>
+
         <parameter key="api2symfony.default_dir">%kernel.cache_dir%/api2symfony</parameter>
         <parameter key="api2symfony.converter.raml.class">Creads\Api2Symfony\Converter\RamlConverter</parameter>
         <parameter key="api2symfony.dumper.class">Creads\Api2Symfony\Dumper\SymfonyDumper</parameter>
+        <parameter key="api2symfony.format_negociator.class">Negotiation\FormatNegotiator</parameter>
+        <parameter key="api2symfony.content_negociation_listener.class">Creads\Api2Symfony\EventListener\ContentNegociationListener</parameter>
     </parameters>
+
     <services>
         <service id="api2symfony.converter.raml" class="%api2symfony.converter.raml.class%" />
+
         <service id="api2symfony.dumper" class="%api2symfony.dumper.class%" />
+
+        <service id="api2symfony.format_negociator" class="%api2symfony.format_negociator.class%" public="false" />
+
+        <service id="api2symfony.content_negociation_listener" class="%api2symfony.content_negociation_listener.class%">
+            <tag name="kernel.event_subscriber" />
+            <argument type="service" id="kernel" />
+            <argument type="service" id="api2symfony.format_negociator" />
+            <argument type="collection">
+                <argument key="format_priorities">%api2symfony.formats%</argument>
+            </argument>
+        </service>
+
     </services>
 </container>
