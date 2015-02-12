@@ -38,14 +38,13 @@ EOT
 
         $dialog = $this->getHelperSet()->get('question');
 
-        $controllers = $this->getContainer()->get('api2symfony.converter.raml')->convert($file, str_replace('/', '\\', $namespace));
+        $controllers = $this->getContainer()->get('api2symfony.converter.raml')->convert($file, $namespace);
 
         foreach ($controllers as $controller) {
             if ($this->getContainer()->get('api2symfony.dumper')->exists($controller, $destination)) {
                 if ($input->isInteractive()) {
                     $output->writeln(sprintf('* <comment>%s</comment>: <error>EXISTS</error>', $controller->getClassName()));
                 }
-
 
                 $answer = $dialog->ask(
                     $input,
@@ -61,7 +60,6 @@ EOT
             }
 
             $file = $this->getContainer()->get('api2symfony.dumper')->dump($controller, $destination);
-
         }
     }
 }
