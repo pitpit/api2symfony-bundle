@@ -13,6 +13,8 @@ class GenerateRamlCommand extends RamlCommand
 {
     protected function configure()
     {
+        parent::configure();
+
         $this
             ->setName('api2symfony:raml:generate')
             ->setDescription('Generate Symfony controllers from RAML')
@@ -20,12 +22,10 @@ class GenerateRamlCommand extends RamlCommand
             ->setHelp(<<<EOT
 The <info>%command.name%</info> command will convert a RAML specification to Symfony controllers.
 
-  <info>php %command.full_name% path/to/file.raml Base/Namespace/Of/YourBundle [--destination=force/another/destination/path]</info>
+  <info>php %command.full_name% "Acme\\DemoBundle\\Controller" path/to/file.raml [--destination=force/another/destination/path]</info>
 EOT
             );
         ;
-
-        parent::configure();
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -34,32 +34,10 @@ EOT
 
         $destination = $this->getDestination($input, $output);
 
-        $namespace = $this->getNamespace($input) . '\Controller';
+        $namespace = $this->getNamespace($input);
 
-        $dialog = $this->getHelperSet()->get('question');
+        $controllers = $this->getContainer()->get('api2symfony.converter.raml')->generate($file, $namespace);
 
-        $controllers = $this->getContainer()->get('api2symfony.converter.raml')->convert($file, $namespace);
-
-        foreach ($controllers as $controller) {
-            if ($this->getContainer()->get('api2symfony.dumper')->exists($controller, $destination)) {
-                if ($input->isInteractive()) {
-                    $output->writeln(sprintf('* <comment>%s</comment>: <error>EXISTS</error>', $controller->getClassName()));
-                }
-
-                $answer = $dialog->ask(
-                    $input,
-                    $output,
-                    new Question(sprintf('<question>Overwrite this file (previous file will be renamed with extension .old) ?</question> [Y]/n ', $controller->getClassName()), false)
-                );
-                if ($answer === 'n' || $answer === 'N') {
-                    continue;
-                }
-                $output->writeln(sprintf('* <comment>%s</comment>: <info>OVERWRITTEN</info>', $controller->getClassName()));
-            } else {
-                $output->writeln(sprintf('* <comment>%s</comment>: <info>CREATED</info>', $controller->getClassName()));
-            }
-
-            $file = $this->getContainer()->get('api2symfony.dumper')->dump($controller, $destination);
-        }
+        $this->store($input, $output, $controllers);
     }
 }

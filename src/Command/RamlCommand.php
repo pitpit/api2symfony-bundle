@@ -19,7 +19,7 @@ abstract class RamlCommand extends ContainerAwareCommand
     protected function configure()
     {
         $this
-            ->addArgument('bundle_namespace', InputArgument::REQUIRED, 'Namespace of the bundle where controllers will be dumped')
+            ->addArgument('bundle_namespace', InputArgument::REQUIRED, 'Namespace in a bundle where controllers should be dumped')
             ->addOption('destination', 'd', InputOption::VALUE_OPTIONAL, 'Force another destination for controllers')
         ;
     }
@@ -34,8 +34,8 @@ abstract class RamlCommand extends ContainerAwareCommand
         //memory cache
         if (!$this->namespace) {
             $this->namespace = $input->getArgument('bundle_namespace');
-            //be sure to remove trailing slash or \Controller from namespace
-            $this->namespace = preg_replace('/(\\\Controller)?\\\?$/', '', $this->namespace);
+            //be sure to remove trailing slash
+            $this->namespace = preg_replace('/\\\?$/', '', $this->namespace);
         }
 
         return $this->namespace;
@@ -53,7 +53,7 @@ abstract class RamlCommand extends ContainerAwareCommand
 
             if (!$this->destination) {
                 //we try to guess the destination from namespace
-                $namespace = $this->getNamespace($input);
+                $namespace = preg_replace('/(\\\Controller)?$/', '', $this->getNamespace($input));
 
                 $autoload = $this->getContainer()->getParameter('kernel.root_dir') . '/autoload.php';
                 if (file_exists($autoload)) {
@@ -70,7 +70,7 @@ abstract class RamlCommand extends ContainerAwareCommand
                 }
 
                 if (!$this->destination) {
-                    throw new \RuntimeException(sprintf('Could not guess destination for namespace %s. Please  check it or use --destination to force a destination for generated controllers.', $namespace));
+                    throw new \RuntimeException(sprintf('Could not guess destination for bundle namespace %s. Please check it or use --destination to force a destination path.', $namespace));
                 }
             }
 
@@ -91,5 +91,35 @@ abstract class RamlCommand extends ContainerAwareCommand
         }
 
         return $this->destination;
+    }
+
+    protected function store(InputInterface $input, OutputInterface $output, $controllers)
+    {
+
+        $dialog = $this->getHelperSet()->get('question');
+
+        $destination = $this->getDestination($input, $output);
+
+        foreach ($controllers as $controller) {
+            if ($this->getContainer()->get('api2symfony.dumper')->exists($controller, $destination)) {
+                if ($input->isInteractive()) {
+                    $output->writeln(sprintf('* <comment>%s</comment>: <error>EXISTS</error>', $controller->getClassName()));
+                }
+
+                $answer = $dialog->ask(
+                    $input,
+                    $output,
+                    new Question(sprintf('<question>Overwrite this file (previous file will be renamed with extension .old) ?</question> [Y]/n ', $controller->getClassName()), false)
+                );
+                if ($answer === 'n' || $answer === 'N') {
+                    continue;
+                }
+                $output->writeln(sprintf('* <comment>%s</comment>: <info>OVERWRITTEN</info>', $controller->getClassName()));
+            } else {
+                $output->writeln(sprintf('* <comment>%s</comment>: <info>CREATED</info>', $controller->getClassName()));
+            }
+
+            $file = $this->getContainer()->get('api2symfony.dumper')->dump($controller, $destination);
+        }
     }
 }

@@ -13,47 +13,48 @@ But we'd like to also support:
 
 This bundle uses the [api2symfony](https://github.com/creads/api2symfony) library.
 
-## Installation
+Installation
+------------
 
 Using composer:
 
-`composer require creads\api2symfony-bundle 1.0.*@dev`
+```sh
+composer require "creads\api2symfony-bundle":"@dev"
+```
 
-Register the bundle by updating `AppKernel.php`:
+Then register the bundle in `app/AppKernel.php`:
 
-    <?php
+```php
+    public function registerBundles()
+    {
+        // in AppKernel::registerBundles()
+        $bundles = array(
+            // ...
+            new Creads\Api2SymfonyBundle\Api2SymfonyBundle(),
+            // ...
+        );
 
-	// in AppKernel::registerBundles()
-	$bundles = array(
-    	// ...
-    	new Creads\Api2SymfonyBundle\Api2SymfonyBundle(),
-    	// ...
-	);
+        return $bundles;
+    }
+```
 
-## Use case
+Usage
+-----
 
-The bundle provides a command:
-
-`app/console.php api2symfony:generate:raml path/to/api.raml Some\\Namespace`
-
-### Example
-
-`php app/console.php api2symfony:generate:raml path/to/api.raml Acme\\DemoBundle`
-
-`New controller dumped at app/cache/dev/api2symfony/Acme/DemoBundle/1_0_1_alpha/PostsController.php`
+Here's a Raml specification sample (`api.rml`):
 
 ```yaml
 
-	#%RAML 0.8
-	title: Api Example
-	version: 1.0.1-alpha
+  #%RAML 0.8
+  title: Api Example
+  version: 1.0.1-alpha
 
-	/posts:
-	  description: Collection of available post resource
-	  get:
-    	description: Get a list of post
-	  post:
-    	description: Create a new post
+  /posts:
+    description: Collection of available post resource
+    get:
+      description: Get a list of post
+    post:
+      description: Create a new post
       /{id}:
         displayName: Post
         get:
@@ -77,90 +78,8 @@ The bundle provides a command:
             description: Comment a post
 ```
 
-Generated code:
+Generate controllers into `Acme\DemoBundle\Controller`:
 
-```php
-
-	<?php
-
-	namespace Acme\DemoBundle\1_0_1_alpha;
-
-	use Symfony\Bundle\FrameworkBundle\Controller\Controller;
-
-	use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
-	use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
-
-	/**
-	 * Collection of available post resource
-	 *
-	 * This is an auto generated class provided by Creads\Api2Symfony PHP library.
-	 */
-	class PostsController extends Controller
-	{
-    	/**
-	     * Get a list of post
-    	 *
-	     * @Route("/posts", name="get_posts")
-    	 * @Method({"GET"})
-	     */
-    	public function getPostsAction()
-	    {
-
-    	}
-
-	    /**
-    	 * Create a new post
-	     *
-    	 * @Route("/posts", name="post_posts")
-	     * @Method({"POST"})
-    	 */
-	    public function postPostsAction()
-    	{
-
-	    }
-
-    	/**
-	     * Get a single post
-    	 *
-	     * @Route("/posts/{id}", name="get_posts_post")
-    	 * @Method({"GET"})
-	     */
-    	public function getPostsPostAction($id)
-	    {
-    	    return new Response('{"title": "An amazing news"}', 200, array('Content-Type' => 'application/json'));
-	    }
-
-	    /**
-    	 * Delete a specific post
-	     *
-    	 * @Route("/posts/{id}", name="delete_posts_post")
-	     * @Method({"DELETE"})
-    	 */
-	    public function deletePostsPostAction($id)
-    	{
-
-	    }
-
-	    /**
-    	 * Get list of comment for given post
-	     *
-    	 * @Route("/posts/{id}/comments", name="get_posts_post_comments")
-	     * @Method({"GET"})
-    	 */
-    	public function getPostsPostCommentsAction($id)
-	    {
-
-    	}
-
-	    /**
-    	 * Comment a post
-	     *
-    	 * @Route("/posts/{id}/comments", name="post_posts_post_comments")
-	     * @Method({"POST"})
-    	 */
-	    public function postPostsPostCommentsAction($id)
-    	{
-
-	    }
-	}
+```sh
+app/console.php api2symfony:raml:generate "Acme\\DemoBundle\\Controller" api.raml
 ```
