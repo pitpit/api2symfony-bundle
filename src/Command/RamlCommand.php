@@ -19,7 +19,7 @@ abstract class RamlCommand extends ContainerAwareCommand
     protected function configure()
     {
         $this
-            ->addArgument('bundle_namespace', InputArgument::REQUIRED, 'Namespace in a bundle where controllers should be dumped')
+            ->addArgument('namespace', InputArgument::REQUIRED, 'Namespace in a bundle where controllers should be dumped')
             ->addOption('destination', 'd', InputOption::VALUE_OPTIONAL, 'Force another destination for controllers')
         ;
     }
@@ -33,7 +33,7 @@ abstract class RamlCommand extends ContainerAwareCommand
     {
         //memory cache
         if (!$this->namespace) {
-            $this->namespace = $input->getArgument('bundle_namespace');
+            $this->namespace = $input->getArgument('namespace');
             //be sure to remove trailing slash
             $this->namespace = preg_replace('/\\\?$/', '', $this->namespace);
         }
@@ -70,7 +70,7 @@ abstract class RamlCommand extends ContainerAwareCommand
                 }
 
                 if (!$this->destination) {
-                    throw new \RuntimeException(sprintf('Could not guess destination for bundle namespace %s. Please check it or use --destination to force a destination path.', $namespace));
+                    throw new \RuntimeException(sprintf('Could not guess destination for namespace %s. Please check it or use --destination to force a destination path.', $namespace));
                 }
             }
 
@@ -93,9 +93,8 @@ abstract class RamlCommand extends ContainerAwareCommand
         return $this->destination;
     }
 
-    protected function store(InputInterface $input, OutputInterface $output, $controllers)
+    protected function store(InputInterface $input, OutputInterface $output, array $controllers)
     {
-
         $dialog = $this->getHelperSet()->get('question');
 
         $destination = $this->getDestination($input, $output);
