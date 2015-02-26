@@ -32,8 +32,6 @@ EOT
     {
         $file = $input->getArgument('raml_file');
 
-        $destination = $this->getDestination($input, $output);
-
         $namespace = $this->getNamespace($input);
 
         $controllers = $this->getContainer()->get('api2symfony.converter.raml')->generate($file, $namespace);

@@ -42,7 +42,12 @@ abstract class RamlCommand extends ContainerAwareCommand
     }
 
     /**
-     * Returns destination input
+     * Returns destination directory
+     *
+     * If destination is not provided, guess it from namespace.
+     * If directory does not exist, ask to create it.
+     *
+     * Can be called several time, so we put the result in memory cache ($this->destination)
      *
      * @return string
      */

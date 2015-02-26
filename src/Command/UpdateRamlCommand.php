@@ -17,12 +17,11 @@ class UpdateRamlCommand extends RamlCommand
 
         $this
             ->setName('api2symfony:raml:update')
-            ->setDescription('Update Symfony controllers after comparing to RAML specifications')
-            ->addArgument('new_raml_file', InputArgument::REQUIRED, 'New RAML specification file')
-            ->addArgument('old_raml_file', InputArgument::REQUIRED, 'Old RAML specification file')
+            ->setDescription('Update Symfony controllers from RAML specification')
+            ->addArgument('raml_file', InputArgument::REQUIRED, 'New RAML specification file')
             ->addOption('backwards-compatible', 'bc', InputOption::VALUE_NONE, 'Will create new controller in a sub-namespace to maintain the old API working')
             ->setHelp(<<<EOT
-The <info>%command.name%</info> command will update Symfony controllers according to differences between two RAML specifications.
+The <info>%command.name%</info> command will convert a RAML specification to Symfony controllers and merge it with
 
   <info>php %command.full_name% "Acme\\DemoBundle\\Controller" path/to/new_file.raml path/to/old_file.raml [--destination=force/another/destination/path]</info>
 EOT
@@ -32,17 +31,49 @@ EOT
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $newFile = $input->getArgument('new_raml_file');
-        $oldFile = $input->getArgument('old_raml_file');
+        $file = $input->getArgument('raml_file');
 
         $destination = $this->getDestination($input, $output);
 
         $namespace = $this->getNamespace($input);
 
-        $dialog = $this->getHelperSet()->get('question');
+        $newControllers = $this->getContainer()->get('api2symfony.converter.raml')->generate($file, $namespace);
 
-        $controllers = $this->getContainer()->get('api2symfony.converter.raml')->update($newFile, $oldFile, $namespace);
+        $oldControllers = $this->getContainer()->get('api2symfony.loader.symfony_controller')->load($file);
 
-        $this->store($input, $output, $controllers);
+        $loader = $this->getContainer()->get('api2symfony.loader.symfony_controller');
+
+        $diffEngine = $this->getContainer()->get('api2symfony.diff_engine');
+
+        $done = array();
+        foreach ($controllers as $className => $newController) {
+
+            $oldController = isset($oldControllers[$className])?$oldControllers[$className]:null;
+
+            $diffs = $diffEngine->compare($oldController, $newController);
+            if ($diffs->isCreated()) {
+                $input->writeln(sprintf('<info>%s</info>: controller created', $className));
+            } else if ($diffs->isModified()) {
+                $input->writeln(sprintf('<info>%s</info>: controller modified', $className));
+                foreach ($diffs as $diff) {
+                    //detect methods additions
+                    //detect methods modification
+                    //detect methods deletion
+                }
+            } else {
+                $input->writeln('<info>%s</info>: no changes in controler');
+            }
+
+            $done[] = $className;
+        }
+
+        foreach ($controllers as $className => $oldControllers) {
+            if (!in_array($className, $done)) {
+                $input->writeln('<info>%s</info>: controller deleted');
+                $done[] = $className;
+            }
+        }
+
+        //$this->store($input, $output, $controllers);
     }
 }
